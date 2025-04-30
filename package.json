@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start:dev": "node --watch api.js"
+  },
+  "dependencies": {
+    "fastify": "^5.3.2",
+    "pg": "^8.15.6"
+  },
+  "type": "module"
+}
