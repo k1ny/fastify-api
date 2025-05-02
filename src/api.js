@@ -1,19 +1,24 @@
 import Fastify from "fastify";
 import pg from "pg";
+import dotenv from "dotenv";
+import { userSchema } from "./schemas.js";
+dotenv.config();
 
 const fastify = Fastify({
   logger: true,
 });
 
 const pool = new pg.Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "kursovaya",
-  password: "510141",
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
+  port: process.env.DB_PORT,
 });
 
-fastify.get("/users", async function handler(request, reply) {
+fastify.addSchema(userSchema);
+
+fastify.get("/users", async (reply) => {
   try {
     const res = await pool.query("SELECT * FROM users");
     return res.rows;
@@ -23,36 +28,43 @@ fastify.get("/users", async function handler(request, reply) {
   }
 });
 
-fastify.post("/users", async function handler(request, reply) {
-  const {
-    last_name,
-    first_name,
-    middle_name,
-    passport_serial,
-    email,
-    password_hash,
-  } = request.body;
-  try {
-    const res = await pool.query(
-      "INSERT INTO users (last_name, first_name, middle_name, passport_serial, email, password_hash) VALUES ($1, $2, $3, $4, $5, $6)",
-      [
-        last_name,
-        first_name,
-        middle_name,
-        passport_serial,
-        email,
-        password_hash,
-      ],
-    );
-    return reply.status(201).send({ user: res.rows[0] });
-  } catch (err) {
-    fastify.log.error(err);
-    return reply.status(500).send({ message: "Internal server error" });
-  }
+fastify.post("/users", {
+  schema: {
+    body: { $ref: "/schemas/user" },
+  },
+  handler: async (request, reply) => {
+    const {
+      last_name,
+      first_name,
+      middle_name,
+      passport_serial,
+      email,
+      password_hash,
+    } = request.body;
+
+    try {
+      const res = await pool.query(
+        "INSERT INTO users (last_name, first_name, middle_name, passport_serial, email, password_hash) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        [
+          last_name,
+          first_name,
+          middle_name,
+          passport_serial,
+          email,
+          password_hash,
+        ],
+      );
+      return reply.status(201).send({ user: res.rows[0] });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
 });
 
-fastify.patch("/users", async function handler(request, reply) {
-  const { id, ...fieldsToUpdate } = request.body;
+fastify.patch("/users", async (request, reply) => {
+  const { id } = request.query;
+  const { ...fieldsToUpdate } = request.body;
 
   if (!id) {
     return reply.status(400).send({ message: "Missing user ID" });
@@ -83,8 +95,8 @@ fastify.patch("/users", async function handler(request, reply) {
   }
 });
 
-fastify.delete("/users", async function handler(request, reply) {
-  const { id } = request.body;
+fastify.delete("/users", async (request, reply) => {
+  const { id } = request.query;
   try {
     const res = await pool.query(
       "DELETE FROM users WHERE id = $1 RETURNING *",
