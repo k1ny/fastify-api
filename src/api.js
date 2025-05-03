@@ -8,6 +8,7 @@ import {
   parcelDeliveryPlaceSchema,
   townPatchSchema,
   townSchema,
+  userAdressSchema,
   userSchema,
 } from "./schemas.js";
 dotenv.config();
@@ -31,6 +32,7 @@ fastify.addSchema(packageSchema);
 fastify.addSchema(packagePatchSchema);
 fastify.addSchema(parcelDeliveryPlaceSchema);
 fastify.addSchema(parcelDeliveryPlacePatchSchema);
+fastify.addSchema(userAdressSchema);
 
 fastify.get("/users", async (reply) => {
   try {
