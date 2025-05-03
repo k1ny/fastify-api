@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import pg from "pg";
 import dotenv from "dotenv";
-import { userSchema } from "./schemas.js";
+import { townPatchSchema, townSchema, userSchema } from "./schemas.js";
 dotenv.config();
 
 const fastify = Fastify({
@@ -17,6 +17,8 @@ const pool = new pg.Pool({
 });
 
 fastify.addSchema(userSchema);
+fastify.addSchema(townSchema);
+fastify.addSchema(townPatchSchema);
 
 fastify.get("/users", async (reply) => {
   try {
@@ -114,9 +116,75 @@ fastify.delete("/users", async (request, reply) => {
   }
 });
 
-try {
-  await fastify.listen({ port: 3001 });
-} catch (err) {
-  fastify.log.error(err);
-  process.exit(1);
-}
+fastify.get("/towns", async (reply) => {
+  try {
+    const res = await pool.query("SELECT * FROM towns");
+    return res.rows;
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+fastify.post("/towns", {
+  shema: {
+    body: { $ref: "/sсhemas/town" },
+  },
+  handler: async (request, reply) => {
+    const { name, latitude, longitude } = request.body;
+
+    try {
+      const res = await pool.query(
+        "INSERT INTO towns (name, latitude, longitude) VALUES ($1, $2, $3)",
+        [name, latitude, longitude],
+      );
+      return reply.status(200).send({ town: res.rows[0] });
+    } catch (error) {
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.patch("/towns", {
+  schema: { body: { $ref: "/schemas/townPatch" } },
+  handler: async (request, reply) => {
+    const { id } = request.query;
+    const { ...fieldsToUpdate } = request.body;
+
+    const keys = Object.keys(fieldsToUpdate);
+    const values = Object.values(fieldsToUpdate);
+    const setClauses = keys.map((key, index) => `${key} = $${index + 1}`);
+
+    if (!id) {
+      return reply.status(400).send({ message: "Missing town ID" });
+    }
+
+    if (keys.length === 0) {
+      return reply
+        .status(400)
+        .send({ message: "No fields provided for update" });
+    }
+
+    try {
+      const res = await pool.query(
+        `UPDATE towns SET ${setClauses.join(", ")} WHERE id = $${keys.length + 1} RETURNING *`,
+        [...values, id],
+      );
+      return reply.status(201).send(res.rows[0]);
+    } catch (error) {
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.delete("/towns", async (request, reply) => {
+  const { id } = request.query;
+
+  try {
+    const res = await pool.query("DELETE FROM towns WHERE id=$1", [id]);
+  } catch (error) {
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+await fastify.listen({ port: 3001 });
