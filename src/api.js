@@ -1,7 +1,13 @@
 import Fastify from "fastify";
 import pg from "pg";
 import dotenv from "dotenv";
-import { townPatchSchema, townSchema, userSchema } from "./schemas.js";
+import {
+  packagePatchSchema,
+  packageSchema,
+  townPatchSchema,
+  townSchema,
+  userSchema,
+} from "./schemas.js";
 dotenv.config();
 
 const fastify = Fastify({
@@ -19,6 +25,8 @@ const pool = new pg.Pool({
 fastify.addSchema(userSchema);
 fastify.addSchema(townSchema);
 fastify.addSchema(townPatchSchema);
+fastify.addSchema(packageSchema);
+fastify.addSchema(packagePatchSchema);
 
 fastify.get("/users", async (reply) => {
   try {
@@ -181,8 +189,101 @@ fastify.delete("/towns", async (request, reply) => {
   const { id } = request.query;
 
   try {
-    const res = await pool.query("DELETE FROM towns WHERE id=$1", [id]);
+    await pool.query("DELETE FROM towns WHERE id=$1", [id]);
+    return reply.status(201).send({ message: "Town was successfully deleted" });
   } catch (error) {
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+fastify.get("/packageTypes", async (reply) => {
+  try {
+    const res = await pool.query("SELECT * FROM package_types");
+    return res.rows;
+  } catch (error) {
+    fastify.log.error(err);
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+fastify.post("/packageTypes", {
+  schema: { body: { $ref: "/schemas/package" } },
+  handler: async (request, reply) => {
+    const { name, length, height, width, weight } = request.body;
+
+    try {
+      const res = await pool.query(
+        "INSERT INTO package_types (name, length, height, width, weight) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [name, length, height, width, weight],
+      );
+      return res.rows;
+    } catch (error) {
+      fastify.log.error(err);
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.patch("/packageTypes", {
+  schema: { body: { $ref: "/schemas/packagePatch" } },
+  handler: async (request, reply) => {
+    const { id } = request.query;
+    const { ...fieldsToUpdate } = request.body;
+
+    const keys = Object.keys(fieldsToUpdate);
+    const values = Object.values(fieldsToUpdate);
+    const setClauses = keys.map((key, index) => `${key} = $${index + 1}`);
+
+    if (!id) {
+      return reply.status(400).send({ message: "Missing town ID" });
+    }
+
+    if (keys.length === 0) {
+      return reply
+        .status(400)
+        .send({ message: "No fields provided for update" });
+    }
+
+    try {
+      const res = await pool.query(
+        `UPDATE package_types SET ${setClauses.join(", ")} WHERE id=$${keys.length + 1} RETURNING *`,
+        [...values, id],
+      );
+
+      if (res.rowCount === 0) {
+        return reply.status(404).send({ message: "PackageType not found" });
+      }
+
+      return res.rows;
+    } catch (error) {
+      fastify.log.error(err);
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.delete("/packageTypes", async (request, reply) => {
+  const { id } = request.query;
+
+  if (!id) {
+    return reply.status(400).send({ message: "Missing packageType ID" });
+  }
+
+  try {
+    const res = await pool.query(
+      "DELETE from package_types WHERE id=$1 RETURNING *",
+      [id],
+    );
+
+    if (res.rowCount === 0) {
+      return reply.status(404).send({ message: "PackageType not found" });
+    }
+
+    return reply
+      .status(201)
+      .send({ message: "PackageType was successfully deleted" });
+  } catch (error) {
+    fastify.log.error(error);
     return reply.status(500).send({ message: "Internal server error" });
   }
 });
