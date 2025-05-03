@@ -107,6 +107,11 @@ fastify.patch("/users", async (request, reply) => {
 
 fastify.delete("/users", async (request, reply) => {
   const { id } = request.query;
+
+  if (!id) {
+    return reply.status(400).send({ message: "Missing user ID" });
+  }
+
   try {
     const res = await pool.query(
       "DELETE FROM users WHERE id = $1 RETURNING *",
@@ -178,6 +183,11 @@ fastify.patch("/towns", {
         `UPDATE towns SET ${setClauses.join(", ")} WHERE id = $${keys.length + 1} RETURNING *`,
         [...values, id],
       );
+
+      if (res.rowCount === 0) {
+        return reply.status(404).send({ message: "Town not found" });
+      }
+
       return reply.status(201).send(res.rows[0]);
     } catch (error) {
       return reply.status(500).send({ message: "Internal server error" });
@@ -188,8 +198,19 @@ fastify.patch("/towns", {
 fastify.delete("/towns", async (request, reply) => {
   const { id } = request.query;
 
+  if (!id) {
+    return reply.status(400).send({ message: "Missing town ID" });
+  }
+
   try {
-    await pool.query("DELETE FROM towns WHERE id=$1", [id]);
+    const res = await pool.query("DELETE FROM towns WHERE id=$1 RETURNING *", [
+      id,
+    ]);
+
+    if (res.rowCount === 0) {
+      return reply.status(404).send({ message: "Town not found" });
+    }
+
     return reply.status(201).send({ message: "Town was successfully deleted" });
   } catch (error) {
     return reply.status(500).send({ message: "Internal server error" });
