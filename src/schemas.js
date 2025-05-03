@@ -99,9 +99,9 @@ export const parcelDeliveryPlacePatchSchema = {
 };
 
 export const userAdressSchema = {
-  $id: "/schemas/userAdress",
+  $id: "/schemas/userAddress",
   type: "object",
-  required: [town_id, user_id, street],
+  required: ["town_id", "user_id", "street"],
   properties: {
     town_id: { type: "integer" },
     user_id: { type: "integer" },
@@ -115,7 +115,7 @@ export const userAdressSchema = {
 };
 
 export const userAdressPatchSchema = {
-  $id: "/schemas/userAdressPatch",
+  $id: "/schemas/userAddressPatch",
   type: "object",
   properties: {
     town_id: { type: "integer" },
@@ -133,7 +133,7 @@ export const userAdressPatchSchema = {
 export const orderTypesSchema = {
   $id: "/schemas/orderTypes",
   type: "object",
-  required: [name],
+  required: ["name"],
   properties: {
     name: { type: "string" },
   },
@@ -144,12 +144,12 @@ export const orderSchema = {
   $id: "/schemas/order",
   type: "object",
   required: [
-    order_type,
-    sender_address,
-    sender_id,
-    receiver_last_name,
-    receiver_first_name,
-    package_id,
+    "order_type",
+    "sender_address",
+    "sender_id",
+    "receiver_last_name",
+    "receiver_first_name",
+    "package_id",
   ],
   properties: {
     order_type: { type: "string" },
