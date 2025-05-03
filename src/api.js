@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import {
   packagePatchSchema,
   packageSchema,
+  parcelDeliveryPlacePatchSchema,
+  parcelDeliveryPlaceSchema,
   townPatchSchema,
   townSchema,
   userSchema,
@@ -27,6 +29,8 @@ fastify.addSchema(townSchema);
 fastify.addSchema(townPatchSchema);
 fastify.addSchema(packageSchema);
 fastify.addSchema(packagePatchSchema);
+fastify.addSchema(parcelDeliveryPlaceSchema);
+fastify.addSchema(parcelDeliveryPlacePatchSchema);
 
 fastify.get("/users", async (reply) => {
   try {
@@ -303,6 +307,110 @@ fastify.delete("/packageTypes", async (request, reply) => {
     return reply
       .status(201)
       .send({ message: "PackageType was successfully deleted" });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+fastify.get("/parcelDeliveryPlaces", async (reply) => {
+  try {
+    const res = await pool.query("SELECT * FROM parcel_delivery_places");
+    return res.rows;
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ message: "Internal server error" });
+  }
+});
+
+fastify.post("/parcelDeliveryPlaces", {
+  schema: { body: { $ref: "/schemas/parcelDeliveryPlace" } },
+  handler: async (request, reply) => {
+    const { town_id, latitude, longitude } = request.body;
+
+    const townExists = await pool.query("SELECT id FROM towns WHERE id = $1", [
+      town_id,
+    ]);
+
+    if (townExists.rows.length === 0) {
+      return reply.code(404).send({
+        message: `Town with id ${town_id} not found`,
+      });
+    }
+
+    try {
+      const res = await pool.query(
+        "INSERT INTO parcel_delivery_places (town_id, latitude, longitude) VALUES ($1, $2, $3) RETURNING *",
+        [town_id, latitude, longitude],
+      );
+      return res.rows;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.patch("/parcelDeliveryPlaces", {
+  schema: { body: { $ref: "/schemas/parcelDeliveryPlacePatch" } },
+  handler: async (request, reply) => {
+    const { id } = request.query;
+    const { ...fieldsToUpdate } = request.body;
+
+    const keys = Object.keys(fieldsToUpdate);
+    const values = Object.values(fieldsToUpdate);
+    const setClauses = keys.map((key, index) => `${key} = $${index + 1}`);
+
+    if (!id) {
+      return reply.status(400).send({ message: "Missing DeliveryPlace ID" });
+    }
+
+    if (keys.length === 0) {
+      return reply
+        .status(400)
+        .send({ message: "No fields provided for update" });
+    }
+
+    try {
+      const res = await pool.query(
+        `UPDATE parcel_delivery_places SET ${setClauses.join(", ")} WHERE id=$${keys.length + 1} RETURNING *`,
+        [...values, id],
+      );
+
+      if (res.rowCount === 0) {
+        return reply
+          .status(404)
+          .send({ message: "ParcelDeliveryPlace not found" });
+      }
+
+      return res.rows;
+    } catch (error) {
+      fastify.log.error(err);
+      return reply.status(500).send({ message: "Internal server error" });
+    }
+  },
+});
+
+fastify.delete("/parcelDeliveryPlaces", async (request, reply) => {
+  const { id } = request.query;
+
+  if (!id) {
+    return reply.status(400).send({ message: "Missing DeliveryPlace ID" });
+  }
+
+  try {
+    const res = await pool.query(
+      "DELETE from parcel_delivery_places WHERE id=$1 RETURNING *",
+      [id],
+    );
+
+    if (res.rowCount === 0) {
+      return reply.status(404).send({ message: "DeliveryPlace not found" });
+    }
+
+    return reply
+      .status(201)
+      .send({ message: "DeliveryPlace was successfully deleted" });
   } catch (error) {
     fastify.log.error(error);
     return reply.status(500).send({ message: "Internal server error" });
