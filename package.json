@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start:dev": "node --watch src/api.js"
+    "start:dev": "node --env-file=.env --watch -- src/app.js"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
