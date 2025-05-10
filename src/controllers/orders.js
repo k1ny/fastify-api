@@ -21,9 +21,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/orders", {
+  fastify.patch("/orders/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -35,15 +35,15 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const order = await ordersService.updateOrder(id, request.body);
       reply.code(200).send(order);
     },
   });
 
-  fastify.delete("/orders", {
+  fastify.delete("/orders/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -52,7 +52,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await ordersService.deleteOrder(id);
       reply.code(200).send({ message: "Order was successfully deleted!" });
     },

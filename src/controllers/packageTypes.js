@@ -23,9 +23,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/packageTypes", {
+  fastify.patch("/packageTypes/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -37,7 +37,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const packages = await packageTypesService.updatePackageType(
         id,
         request.body,
@@ -46,9 +46,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.delete("/packageTypes", {
+  fastify.delete("/packageTypes/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -57,7 +57,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await packageTypesService.deletePackageType(id);
       reply.code(200).send({ message: "Package type successfully deleted!" });
     },

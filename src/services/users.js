@@ -37,16 +37,21 @@ export const usersService = {
 
     const keys = Object.keys(fieldsToUpdate);
     if (keys.length === 0) {
-      throw new Error("No fields provided for update");
+      throw new Error("No valid fields provided for update");
     }
 
     const setClauses = keys.map((key, index) => `${key} = $${index + 1}`);
     const values = Object.values(fieldsToUpdate);
 
-    const res = await pool.query(
-      `UPDATE users SET ${setClauses.join(", ")} WHERE id = $${keys.length + 1} RETURNING *`,
-      [...values, id],
-    );
+    const query = `
+      UPDATE users
+      SET ${setClauses.join(", ")}
+      WHERE id = $${keys.length + 1}
+      RETURNING *;
+    `;
+
+    const res = await pool.query(query, [...values, id]);
+
     if (res.rowCount === 0) {
       const err = new Error("User not found");
       err.statusCode = 404;

@@ -21,9 +21,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/orderTypes", {
+  fastify.patch("/orderTypes/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -35,7 +35,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const orderTypes = await orderTypesService.updateOrderType(
         id,
         request.body,
@@ -44,9 +44,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.delete("/orderTypes", {
+  fastify.delete("/orderTypes/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -55,7 +55,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await orderTypesService.deleteOrderType(id);
       reply.code(200).send({ message: "OrderType type successfully deleted!" });
     },

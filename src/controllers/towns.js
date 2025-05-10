@@ -21,9 +21,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/towns", {
+  fastify.patch("/towns/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -35,15 +35,15 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const town = await townsService.updateTown(id, request.body);
       reply.code(200).send(town);
     },
   });
 
-  fastify.delete("/towns", {
+  fastify.delete("/towns/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -52,7 +52,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await townsService.deleteTown(id);
       reply.code(200).send({ message: "Town successfully deleted!" });
     },

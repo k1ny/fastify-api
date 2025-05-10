@@ -26,9 +26,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/userAddresses", {
+  fastify.patch("/userAddresses/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -40,7 +40,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const userAddress = await userAddressesService.updateUserAddress(
         id,
         request.body,
@@ -49,9 +49,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.delete("/userAddresses", {
+  fastify.delete("/userAddresses/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -60,7 +60,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await userAddressesService.deleteUserAddress(id);
       reply.code(200).send({ message: "UserAddress successfully deleted!" });
     },

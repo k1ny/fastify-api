@@ -24,6 +24,16 @@ await fastify.register(import("./controllers/ParcelDeliveryPlaces.js"));
 await fastify.register(import("./controllers/orderTypes.js"));
 await fastify.register(import("./controllers/orders.js"));
 
+fastify.addHook("preValidation", async (request, reply) => {
+  if (request.body && typeof request.body === "object") {
+    Object.keys(request.body).forEach((key) => {
+      if (request.body[key] === "") {
+        delete request.body[key];
+      }
+    });
+  }
+});
+
 try {
   await pool.connect();
   await fastify.listen({ port: 3001, host: "0.0.0.0" });

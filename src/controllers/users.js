@@ -21,9 +21,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/users", {
+  fastify.patch("/users/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -35,15 +35,15 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       const user = await usersService.updateUser(id, request.body);
       reply.code(200).send(user);
     },
   });
 
-  fastify.delete("/users", {
+  fastify.delete("/users/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -52,7 +52,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await usersService.deleteUser(id);
       reply.code(200).send({ message: "User successfully deleted!" });
     },

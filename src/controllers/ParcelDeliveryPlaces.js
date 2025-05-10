@@ -28,9 +28,9 @@ export default async function (fastify) {
     },
   });
 
-  fastify.patch("/parcelDeliveryPlaces", {
+  fastify.patch("/parcelDeliveryPlaces/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "string" },
@@ -42,19 +42,21 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
+      console.log("PATCH /parcelDeliveryPlaces/:id body:", request.body);
       const parcelDeliveryPlace =
         await ParcelDeliveryPlacesService.updateParcelDeliveryPlace(
           id,
           request.body,
         );
+
       reply.code(200).send(parcelDeliveryPlace);
     },
   });
 
-  fastify.delete("/parcelDeliveryPlaces", {
+  fastify.delete("/parcelDeliveryPlaces/:id", {
     schema: {
-      query: {
+      params: {
         type: "object",
         properties: {
           id: { type: "integer" },
@@ -63,7 +65,7 @@ export default async function (fastify) {
       },
     },
     async handler(request, reply) {
-      const { id } = request.query;
+      const { id } = request.params;
       await ParcelDeliveryPlacesService.deleteParcelDeliveryPlace(id);
       reply
         .code(200)
