@@ -10,7 +10,7 @@ export const orderSchema = {
     "package_id",
   ],
   properties: {
-    order_type: { type: "string" },
+    order_type: { type: "integer" },
     sender_address: { type: "integer" },
     sender_id: { type: "integer" },
     receiver_last_name: { type: "string" },
@@ -36,7 +36,7 @@ export const orderPatchSchema = {
   $id: "/schemas/orderPatch",
   type: "object",
   properties: {
-    order_type: { type: "string" },
+    order_type: { type: "integer" },
     sender_address: { type: "integer" },
     sender_id: { type: "integer" },
     receiver_last_name: { type: "string" },

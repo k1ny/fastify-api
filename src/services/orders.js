@@ -18,7 +18,7 @@ export const ordersService = {
       receiver_address_id,
       package_id,
     } = data;
-
+    console.log(data);
     const checks = await Promise.all([
       pool.query("SELECT 1 FROM order_types WHERE id = $1", [order_type]),
       pool.query("SELECT 1 FROM parcel_delivery_places WHERE id = $1", [
